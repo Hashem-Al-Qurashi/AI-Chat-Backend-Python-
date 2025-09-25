@@ -1,3 +1,3 @@
-from memory.graph_manager import GraphManager
+from memory.simple_graph_manager import SimpleGraphManager
 
-__all__ = ["GraphManager"]
+__all__ = ["SimpleGraphManager"]
