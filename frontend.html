@@ -7,11 +7,32 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        /* Custom scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         
         .container {
@@ -47,11 +68,25 @@
             padding: 30px;
         }
         
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+            
+            .chat-section, .memory-section {
+                min-height: 400px;
+                max-height: 60vh;
+            }
+        }
+        
         .chat-section, .memory-section {
             background: #f8f9fa;
             border-radius: 15px;
             padding: 25px;
-            height: 600px;
+            min-height: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
         .section-title {
