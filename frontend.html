@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Memory Backend - Testing Interface</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .chat-section, .memory-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            height: 600px;
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title::before {
+            content: "🤖";
+            margin-right: 10px;
+        }
+        
+        .memory-section .section-title::before {
+            content: "🧠";
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+        }
+        
+        .response-area {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .memory-display {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            height: 400px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        
+        .stage-indicator {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .stage-1 { background: #3498db; }
+        .stage-2 { background: #f39c12; }
+        .stage-3 { background: #e67e22; }
+        .stage-4 { background: #e74c3c; }
+        
+        .memory-node {
+            background: #ecf0f1;
+            border-left: 4px solid #3498db;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .preference-node {
+            border-left-color: #e67e22;
+        }
+        
+        .message-node {
+            border-left-color: #27ae60;
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-section, .memory-section {
+                height: auto;
+                min-height: 400px;
+            }
+        }
+        
+        .status-bar {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 30px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e74c3c;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.online {
+            background: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 AI Memory Backend</h1>
+            <p>Test the evolving memory system across 4 stages</p>
+        </div>
+        
+        <div class="status-bar">
+            <div style="display: flex; align-items: center;">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">Checking server...</span>
+            </div>
+            <div>
+                <span>Messages: <strong id="messageCount">0</strong></span>
+                <span style="margin-left: 20px;">Stage: <strong id="currentStage">-</strong></span>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- Chat Section -->
+            <div class="chat-section">
+                <div class="section-title">Chat Interface</div>
+                
+                <div class="input-group">
+                    <label for="userId">User ID:</label>
+                    <input type="text" id="userId" value="demo_user" placeholder="Enter your user ID">
+                </div>
+                
+                <div class="input-group">
+                    <label for="message">Message:</label>
+                    <textarea id="message" rows="3" placeholder="Type your message here..."></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label for="temperature">Temperature (0.0 - 1.0):</label>
+                    <input type="number" id="temperature" value="0.7" step="0.1" min="0" max="1">
+                </div>
+                
+                <button class="btn" onclick="sendMessage()">Send Message</button>
+                <button class="btn btn-secondary" onclick="clearHistory()">Clear History</button>
+                <button class="btn btn-secondary" onclick="loadTestMessages()">Load Coffee Test</button>
+                
+                <div class="response-area" id="chatResponse">
+                    <p><em>AI responses will appear here...</em></p>
+                </div>
+            </div>
+            
+            <!-- Memory Section -->
+            <div class="memory-section">
+                <div class="section-title">Memory Graph</div>
+                
+                <button class="btn btn-secondary" onclick="refreshMemory()">Refresh Memory</button>
+                <button class="btn btn-secondary" onclick="showGraphStats()">Graph Stats</button>
+                
+                <div class="memory-display" id="memoryDisplay">
+                    <p><em>Memory information will appear here...</em></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+        let currentUserId = 'demo_user';
+        let messageCount = 0;
+        
+        // Check server status on load
+        window.onload = function() {
+            checkServerStatus();
+        };
+        
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                document.getElementById('statusIndicator').classList.add('online');
+                document.getElementById('statusText').textContent = `Server Online - Provider: ${data.llm_provider}`;
+            } catch (error) {
+                document.getElementById('statusIndicator').classList.remove('online');
+                document.getElementById('statusText').textContent = 'Server Offline';
+            }
+        }
+        
+        async function sendMessage() {
+            const userId = document.getElementById('userId').value;
+            const message = document.getElementById('message').value;
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            
+            if (!message.trim()) {
+                alert('Please enter a message');
+                return;
+            }
+            
+            currentUserId = userId;
+            
+            // Show loading state
+            document.querySelector('.chat-section').classList.add('loading');
+            
+            try {
+                const response = await fetch(`${API_BASE}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        message: message,
+                        config: {
+                            temperature: temperature,
+                            maxTokens: 500
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayChatResponse(data);
+                    updateStats(data);
+                    
+                    // Clear message input
+                    document.getElementById('message').value = '';
+                    
+                    // Auto-refresh memory
+                    setTimeout(refreshMemory, 500);
+                } else {
+                    displayError('Chat Error: ' + (data.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                displayError('Network Error: ' + error.message);
+            } finally {
+                document.querySelector('.chat-section').classList.remove('loading');
+            }
+        }
+        
+        function displayChatResponse(data) {
+            const responseArea = document.getElementById('chatResponse');
+            
+            const stageClass = `stage-${data.stage.split(' ')[1]}`;
+            
+            let memoryInfo = '';
+            if (data.memoryUsed && data.memoryUsed.length > 0) {
+                memoryInfo = `<div style="margin-top: 10px;"><strong>Memory Used:</strong><ul>`;
+                data.memoryUsed.forEach(node => {
+                    memoryInfo += `<li>${node.type}: ${(node.content || '').substring(0, 50)}... (weight: ${(node.weight || 0).toFixed(2)})</li>`;
+                });
+                memoryInfo += '</ul></div>';
+            }
+            
+            responseArea.innerHTML = `
+                <div style="margin-bottom: 15px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                        <strong>Stage ${data.stage.split(' ')[1]}</strong>
+                        <span class="stage-indicator ${stageClass}">${data.stage}</span>
+                    </div>
+                    <div style="margin: 10px 0;"><strong>AI Response:</strong></div>
+                    <div style="background: white; padding: 10px; border-radius: 5px; font-style: italic;">
+                        "${data.response}"
+                    </div>
+                    ${memoryInfo}
+                    <div style="font-size: 12px; color: #666; margin-top: 10px;">
+                        Request ID: ${data.requestId} | Conversations: ${data.conversationCount}
+                    </div>
+                </div>
+            ` + responseArea.innerHTML;
+        }
+        
+        function updateStats(data) {
+            messageCount = data.conversationCount || 0;
+            document.getElementById('messageCount').textContent = messageCount;
+            document.getElementById('currentStage').textContent = data.stage;
+        }
+        
+        async function refreshMemory() {
+            if (!currentUserId) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/memory/${currentUserId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayMemoryInfo(data);
+                } else {
+                    document.getElementById('memoryDisplay').innerHTML = `
+                        <p style="color: #e74c3c;"><strong>Memory Error:</strong> ${data.detail}</p>
+                        <p><em>This is normal for new users with no conversations yet.</em></p>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('memoryDisplay').innerHTML = `
+                    <p style="color: #e74c3c;"><strong>Network Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+        
+        function displayMemoryInfo(data) {
+            const memoryArea = document.getElementById('memoryDisplay');
+            
+            let preferencesHtml = '';
+            if (data.topPreferences && data.topPreferences.length > 0) {
+                preferencesHtml = '<h4>🎯 Top Preferences:</h4>';
+                data.topPreferences.forEach(pref => {
+                    preferencesHtml += `
+                        <div class="memory-node preference-node">
+                            <strong>${pref.keyword}</strong><br>
+                            Weight: ${pref.weight.toFixed(2)} | Count: ${pref.count}
+                        </div>
+                    `;
+                });
+            }
+            
+            const stageClass = `stage-${data.stage.split(' ')[1]}`;
+            
+            memoryArea.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h3>User: ${data.userId} <span class="stage-indicator ${stageClass}">${data.stage}</span></h3>
+                    <p><strong>Conversations:</strong> ${data.conversationCount}</p>
+                </div>
+                
+                <h4>📊 Graph Statistics:</h4>
+                <div class="memory-node">
+                    <strong>Nodes:</strong> ${data.graphStats.total_nodes}<br>
+                    <strong>Edges:</strong> ${data.graphStats.total_edges}<br>
+                    <strong>Messages:</strong> ${data.graphStats.message_count}
+                </div>
+                
+                ${preferencesHtml}
+                
+                <div style="margin-top: 20px; padding: 10px; background: #f0f8ff; border-radius: 8px; font-size: 12px;">
+                    <strong>💡 Memory Evolution:</strong><br>
+                    Stage 1 (1-4 msgs): Basic history<br>
+                    Stage 2 (5-14 msgs): Keyword tracking<br>
+                    Stage 3 (15-29 msgs): Relationship weighting<br>
+                    Stage 4 (30+ msgs): Advanced contextual search
+                </div>
+            `;
+        }
+        
+        function showGraphStats() {
+            refreshMemory();
+        }
+        
+        function clearHistory() {
+            document.getElementById('chatResponse').innerHTML = '<p><em>AI responses will appear here...</em></p>';
+            document.getElementById('memoryDisplay').innerHTML = '<p><em>Memory information will appear here...</em></p>';
+            messageCount = 0;
+            document.getElementById('messageCount').textContent = '0';
+            document.getElementById('currentStage').textContent = '-';
+        }
+        
+        function loadTestMessages() {
+            const coffeeMessages = [
+                "Hello! I'm testing the memory system.",
+                "I really love drinking coffee in the morning.",
+                "Coffee helps me stay focused during work.",
+                "My favorite type of coffee is a dark roast.",
+                "Do you have any coffee recommendations?"
+            ];
+            
+            const messageField = document.getElementById('message');
+            let index = 0;
+            
+            function sendNext() {
+                if (index < coffeeMessages.length) {
+                    messageField.value = coffeeMessages[index];
+                    index++;
+                    setTimeout(() => {
+                        sendMessage();
+                        setTimeout(sendNext, 3000); // Wait 3 seconds between messages
+                    }, 500);
+                }
+            }
+            
+            sendNext();
+        }
+        
+        function displayError(error) {
+            const responseArea = document.getElementById('chatResponse');
+            responseArea.innerHTML = `
+                <div style="background: #ffe6e6; border: 1px solid #ffcccc; padding: 15px; border-radius: 8px; color: #cc0000;">
+                    <strong>Error:</strong> ${error}
+                </div>
+            ` + responseArea.innerHTML;
+        }
+        
+        // Enter key handler for message input
+        document.getElementById('message').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
